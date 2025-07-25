@@ -5,9 +5,8 @@ TOKEN = '8169250972:AAG77MXmp_AY1t-RNzPuL1RQZ-I38JJU6qs'
 bot = telebot.TeleBot(TOKEN)
 
 admin_id = [1943575640]  # Твой Telegram ID
-users_sent_id = set()    # Для отслеживания, кто уже отправил свой ID
+user_ids = {}  # Словарь user_id: game_id
 
-# Список героев и скинов
 heroes = {
     "Alucard": ["Demonic Blade", "Obsidian Blade"],
     "Layla": ["Blue Specter", "Bunny Babe"],
@@ -15,7 +14,6 @@ heroes = {
     "Miya": ["Captain Thorns", "Christmas Cheer"]
 }
 
-# Прайс обычных алмазов
 diamonds = [
     "Алмазный пропуск - 770 тг",
     "86💎 - 660 тг",
@@ -42,7 +40,6 @@ diamonds = [
     "Сумеречный пропуск - 4300 тг"
 ]
 
-# Прайс бонусных алмазов
 bonus_diamonds = [
     "50+50💎 - 510 тг",
     "150+150💎 - 1380 тг",
@@ -50,7 +47,6 @@ bonus_diamonds = [
     "500+500💎 - 4660 тг"
 ]
 
-# Главное меню
 main_menu = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
 main_menu.add(
     KeyboardButton('💎 Бонусные алмазы'),
@@ -60,31 +56,37 @@ main_menu.add(
     KeyboardButton('✉️ Отзывы'),
     KeyboardButton('✉️ Мой чат'),
     KeyboardButton('💜 Мой канал'),
+    KeyboardButton('✏️ Изменить ID'),
     KeyboardButton('🔙 Назад')
 )
 
-# Команда /start
 @bot.message_handler(commands=['start'])
 def start(message: Message):
     user_id = message.from_user.id
-    if user_id not in users_sent_id:
-        msg = bot.send_message(message.chat.id, "Приветик!🥰 Пожалуйста, пришли свой ID (в формате 1393879353 (15746)) для продолжения.")
+    if user_id not in user_ids:
+        msg = bot.send_message(message.chat.id, "Привет! 🥰 Пожалуйста, пришли свой ID (например 1393879353 (15746))")
         bot.register_next_step_handler(msg, get_user_id)
     else:
-        bot.send_message(message.chat.id, "С возвращением! Выбери интересующий пункт меню:", reply_markup=main_menu)
+        bot.send_message(message.chat.id, "С возвращением! Выберите нужный пункт меню:", reply_markup=main_menu)
 
-# Обработка ввода ID
+# Получение ID
 def get_user_id(message: Message):
-    user_input = message.text
+    game_id = message.text
     user_id = message.from_user.id
-    users_sent_id.add(user_id)
+    user_ids[user_id] = game_id
 
     for admin in admin_id:
-        bot.send_message(admin, f"🆕 Новый пользователь отправил ID:\n{user_input}\nTelegram ID: {user_id}")
+        bot.send_message(admin, f"🆕 Пользователь обновил/отправил ID:\n{game_id}\nTelegram ID: {user_id}")
 
-    bot.send_message(message.chat.id, "Спасибо! Теперь выбери пункт меню:", reply_markup=main_menu)
+    bot.send_message(message.chat.id, "Спасибо! Теперь выберите пункт меню:", reply_markup=main_menu)
 
-# Отправка прайса
+# Кнопка "Изменить ID"
+@bot.message_handler(func=lambda message: message.text == '✏️ Изменить ID')
+def change_id(message: Message):
+    msg = bot.send_message(message.chat.id, "Введите новый ID:")
+    bot.register_next_step_handler(msg, get_user_id)
+
+# Прайс обычных алмазов
 def send_diamond_price_list(message: Message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     for item in diamonds:
@@ -92,7 +94,7 @@ def send_diamond_price_list(message: Message):
     markup.add(KeyboardButton("🔙 Назад"))
     bot.send_message(message.chat.id, "Выберите количество алмазов:", reply_markup=markup)
 
-# Отправка бонусных алмазов
+# Бонусные алмазы
 def send_bonus_diamonds(message: Message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     for item in bonus_diamonds:
@@ -100,12 +102,12 @@ def send_bonus_diamonds(message: Message):
     markup.add(KeyboardButton("🔙 Назад"))
     bot.send_message(message.chat.id, "💎 Бонусные алмазы (только при первом пополнении, с х2 бонусом):", reply_markup=markup)
 
-# Обработка кнопок
+# Обработка всех сообщений
 @bot.message_handler(func=lambda message: True)
 def handle_message(message: Message):
     text = message.text
 
-    if text == '📄 Прайс-лист' or text == '💎 Купить алмазы':
+    if text in ['📄 Прайс-лист', '💎 Купить алмазы']:
         send_diamond_price_list(message)
 
     elif text == '💎 Бонусные алмазы':
@@ -146,7 +148,7 @@ def handle_message(message: Message):
     else:
         bot.send_message(message.chat.id, "Пожалуйста, выбери вариант из меню.")
 
-# Обработка PDF-файлов
+# Обработка PDF
 @bot.message_handler(content_types=['document'])
 def handle_pdf(message: Message):
     if message.document.mime_type == 'application/pdf':
