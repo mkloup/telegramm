@@ -95,7 +95,14 @@ def handle_message(message: Message):
         send_bonus_diamonds(message)
 
     elif text.startswith("💎 ") and any(text.startswith(f"💎 {d.split(' - ')[0]}") for d in diamonds + bonus_diamonds):
-        bot.send_message(message.chat.id, "Отправьте PDF-файл чека. После подтверждения админ отправит вам алмазы в течение часа. Работаем с 10:00 до 24:00. По вопросам: @zadrotzxc")
+        bot.send_message(
+            message.chat.id,
+            "💳 Переведите сумму на карту *4400 4302 1635 1269* (Kaspi)\n"
+            "После оплаты отправьте PDF-файл чека.\n"
+            "⏳ Админ ответит в течение часа. Работаем с 10:00 до 24:00.\n"
+            "По вопросам: @zadrotzxc",
+            parse_mode="Markdown"
+        )
 
     elif text == '🤫 Скинчейнджер':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
