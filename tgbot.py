@@ -10,7 +10,6 @@ heroes = {
     "Layla": ["Blue Specter", "Bunny Babe"],
     "Gusion": ["Cyber Ops", "Night Owl"],
     "Miya": ["Captain Thorns", "Christmas Cheer"]
-    # можно добавить больше
 }
 
 admin_id = [1943575640]  # Замените на свой Telegram ID
@@ -44,7 +43,10 @@ def handle_message(message: Message):
     elif text == '💎 Бонусные алмазы':
         send_bonus_diamonds(message)
 
-    elif text.startswith("💎 ") and any(text.startswith(f"💎 {d.split(' - ')[0]}") for d in diamonds):
+    elif text.startswith("💎 ") and (
+        any(text.startswith(f"💎 {d.split(' - ')[0]}") for d in diamonds) or
+        any(text.startswith(f"💎 {b}") for b in ["50+50💎", "150+150💎", "250+250💎", "500+500💎"])
+    ):
         bot.send_message(message.chat.id, "Отправьте PDF-файл чека. После подтверждения админ отправит вам алмазы в течение часа. Работаем с 10:00 до 24:00. По вопросам: @zadrotzxc")
 
     elif text == '🤫 Скинчейнджер':
@@ -85,7 +87,7 @@ def handle_pdf(message: Message):
     else:
         bot.send_message(message.chat.id, "Пожалуйста, отправьте именно PDF-файл.")
 
-# Полный прайс
+# Прайс-лист
 def send_diamond_price_list(message: Message):
     global diamonds
     diamonds = [
