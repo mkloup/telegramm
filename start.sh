@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 "test1 tgbot.py"
+python3 "tgbot.py"
