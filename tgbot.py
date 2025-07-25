@@ -5,6 +5,7 @@ TOKEN = '8169250972:AAG77MXmp_AY1t-RNzPuL1RQZ-I38JJU6qs'
 bot = telebot.TeleBot(TOKEN)
 
 admin_id = [1943575640]  # Твой Telegram ID
+users_sent_id = set()    # Для отслеживания, кто уже отправил свой ID
 
 # Список героев и скинов
 heroes = {
@@ -65,9 +66,25 @@ main_menu.add(
 # Команда /start
 @bot.message_handler(commands=['start'])
 def start(message: Message):
-    bot.send_message(message.chat.id, "Приветик!🥰 В этом боте ты можешь купить алмазы дешево в MLBB.\nВыбери интересующий пункт меню:", reply_markup=main_menu)
+    user_id = message.from_user.id
+    if user_id not in users_sent_id:
+        msg = bot.send_message(message.chat.id, "Приветик!🥰 Пожалуйста, пришли свой ID (в формате 1393879353 (15746)) для продолжения.")
+        bot.register_next_step_handler(msg, get_user_id)
+    else:
+        bot.send_message(message.chat.id, "С возвращением! Выбери интересующий пункт меню:", reply_markup=main_menu)
 
-# Отправка прайс-листа
+# Обработка ввода ID
+def get_user_id(message: Message):
+    user_input = message.text
+    user_id = message.from_user.id
+    users_sent_id.add(user_id)
+
+    for admin in admin_id:
+        bot.send_message(admin, f"🆕 Новый пользователь отправил ID:\n{user_input}\nTelegram ID: {user_id}")
+
+    bot.send_message(message.chat.id, "Спасибо! Теперь выбери пункт меню:", reply_markup=main_menu)
+
+# Отправка прайса
 def send_diamond_price_list(message: Message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     for item in diamonds:
@@ -95,14 +112,7 @@ def handle_message(message: Message):
         send_bonus_diamonds(message)
 
     elif text.startswith("💎 ") and any(text.startswith(f"💎 {d.split(' - ')[0]}") for d in diamonds + bonus_diamonds):
-        bot.send_message(
-            message.chat.id,
-            "💳 Переведите сумму на карту *4400 4302 1635 1269* (Kaspi)\n"
-            "После оплаты отправьте PDF-файл чека.\n"
-            "⏳ Админ ответит в течение часа. Работаем с 10:00 до 24:00.\n"
-            "По вопросам: @zadrotzxc",
-            parse_mode="Markdown"
-        )
+        bot.send_message(message.chat.id, "💳 Оплата на карту: *4400 4302 1635 1269*\n\nОтправьте PDF-файл чека. После подтверждения админ отправит вам алмазы в течение часа. Работаем с 10:00 до 24:00. По вопросам: @zadrotzxc", parse_mode='Markdown')
 
     elif text == '🤫 Скинчейнджер':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -119,7 +129,7 @@ def handle_message(message: Message):
         bot.send_message(message.chat.id, f"Какой скин для {text} вас интересует? За каждый скин — 100 тг", reply_markup=markup)
 
     elif any(text in skins for skins in heroes.values()):
-        bot.send_message(message.chat.id, "Отправьте PDF-файл оплаты. После проверки вы получите файл с скином и инструкцию по установке (YouTube-ссылка).")
+        bot.send_message(message.chat.id, "💳 Оплата на карту: *4400 4302 1635 1269*\n\nОтправьте PDF-файл оплаты. После проверки вы получите файл с скином и инструкцию по установке (YouTube-ссылка).", parse_mode='Markdown')
 
     elif text == '✉️ Мой чат':
         bot.send_message(message.chat.id, "Вот ссылка на чат: https://t.me/+g1PG1UEztuw5NmUy")
